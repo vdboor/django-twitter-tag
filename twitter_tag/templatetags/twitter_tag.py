@@ -13,7 +13,6 @@ from twitter_tag.utils import enrich_api_result, urlize_twitter_text
 
 
 register = template.Library()
-logger = logging.getLogger(__name__)
 
 
 def get_cache_key(*args):
@@ -39,7 +38,7 @@ def get_tweets(context, username, asvar, exclude='', max_url_length=60, limit=No
                                                          include_rts=('retweets' not in exclude),
                                                          include_entities=True)
     except (twitter.TwitterError, URLError), e:
-        logger.error(str(e))
+        logging.getLogger(__name__).error(str(e))
         context[asvar] = cache.get(cache_key, [])
         return ""
 
@@ -66,7 +65,7 @@ def search_tweets(context, search_query, asvar, lang='', exclude='', max_url_len
     try:
         found_tweets = twitter.Api().GetSearch(term=search_query, per_page=limit, lang=lang, query_users=False)
     except (twitter.TwitterError, URLError), e:
-        logger.error(str(e))
+        logging.getLogger(__name__).error(str(e))
         context[asvar] = cache.get(cache_key, [])
         return ""
 
