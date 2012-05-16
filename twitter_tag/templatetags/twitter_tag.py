@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import logging
+from hashlib import md5
 from urllib2 import URLError
 
 from django import template
@@ -16,6 +17,10 @@ logger = logging.getLogger(__name__)
 
 def get_cache_key(*args):
     return 'get_tweets_%s' % ('_'.join([str(arg) for arg in args if arg]))
+
+
+def get_search_cache_key(term, *args):
+    return 'get_tweets_{term}_{args}'.format(term=md5(term).hexdigest(), args='_'.join([str(arg) for arg in args if arg]))
 
 
 @tag(register, [Constant("for"), Variable(), Constant("as"), Name(),
@@ -38,6 +43,33 @@ def get_tweets(context, username, asvar, exclude='', max_url_length=60, limit=No
         return ""
 
     tweets = enrich_api_result(user_last_tweets, 'replies' in exclude, max_url_length=max_url_length, limit=limit)
+    context[asvar] = tweets
+    cache.set(cache_key, tweets)
+    return ""
+
+
+@tag(register, [Variable(), Constant("as"), Name(),
+                Optional([Constant("language"), Variable("lang")]),
+                Optional([Constant("exclude"), Variable("exclude")]),
+                Optional([Constant("max_url_length"), Variable("max_url_length")]),
+                Optional([Constant("limit"), Variable("limit")])])
+def search_tweets(context, search_query, asvar, lang='', exclude='', max_url_length=60, limit=None):
+    """
+    Search for status messages which contain a given string.
+    """
+    # The cache exists to return old results when the twitter API reports an error.
+    cache_key = get_search_cache_key(search_query, asvar, exclude, limit)
+    if 'retweets' in exclude:
+        search_query += "+exclude:retweets"
+
+    try:
+        found_tweets = twitter.Api().GetSearch(term=search_query, per_page=limit, lang=lang, query_users=False)
+    except (twitter.TwitterError, URLError), e:
+        logger.error(str(e))
+        context[asvar] = cache.get(cache_key, [])
+        return ""
+
+    tweets = enrich_api_result(found_tweets, 'replies' in exclude, max_url_length=max_url_length, limit=limit)
     context[asvar] = tweets
     cache.set(cache_key, tweets)
     return ""
