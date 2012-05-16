@@ -42,12 +42,16 @@ Usage
 
     {% get_tweets for "futurecolors" as tweets %}
 
+  or, search for tweets about a topic::
+
+    {% search_tweets "#Django" as tweets %}
+
 
 * Now you have a list of tweets in your template context, which you can iterate over like this::
 
     <ul>
     {% for tweet in tweets %}
-        <li>{{ tweet.html|safe }}</li>
+        <li>{{ tweet.html }}</li>
     {% endfor %}
     </ul>
 
@@ -112,6 +116,11 @@ According to python-twitter_ API, every status has following attributes, availia
   status.urls
   status.user_mentions
   status.hashtags
+
+The templatetag also adds the following fields::
+
+  status.created_at_as_datetime
+  status.html
 
 
 Tweet's html
