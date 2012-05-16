@@ -11,6 +11,7 @@ from twitter_tag.utils import enrich_api_result
 
 
 register = template.Library()
+logger = logging.getLogger(__name__)
 
 
 def get_cache_key(*args):
@@ -32,7 +33,7 @@ def get_tweets(context, username, asvar, exclude='', max_url_length=60, limit=No
                                                          include_rts=('retweets' not in exclude),
                                                          include_entities=True)
     except (twitter.TwitterError, URLError), e:
-        logging.getLogger(__name__).error(str(e))
+        logger.error(str(e))
         context[asvar] = cache.get(cache_key, [])
         return ""
 
