@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.utils.safestring import mark_safe
 import ttp
 
 
@@ -12,7 +13,8 @@ def enrich_api_result(tweet_list, exclude_replies=False, max_url_length=60, limi
             continue
 
         # Add expando attributes to the status
-        status.html = urlize_status(status, max_url_length=max_url_length)
+        # mark_safe() should perhaps happen in the templatetag layer, but for the purpose it's good enough here.
+        status.html = mark_safe(urlize_status(status, max_url_length=max_url_length))
         status.created_at_as_datetime = datetime.fromtimestamp(status.created_at_in_seconds)
         tweets.append(status)
 
