@@ -12,7 +12,7 @@ def enrich_api_result(tweet_list, exclude_replies=False, max_url_length=60, limi
             continue
 
         # Add expando attributes to the status
-        status.html = parse_twitter_text(status, max_url_length=max_url_length)
+        status.html = urlize_status(status, max_url_length=max_url_length)
         status.created_at_as_datetime = datetime.fromtimestamp(status.created_at_in_seconds)
         tweets.append(status)
 
@@ -22,11 +22,20 @@ def enrich_api_result(tweet_list, exclude_replies=False, max_url_length=60, limi
     return tweets
 
 
-def parse_twitter_text(status, max_url_length=60):
+def urlize_status(status, max_url_length=60):
     """
     Convert the twitter status to HTML.
+    This also expands the links and retweet status.
     """
     text = expand_twitter_status_text(status, max_url_length=max_url_length)
+    return urlize_twitter_text(text, max_url_length=max_url_length)
+
+
+def urlize_twitter_text(text, max_url_length=60):
+    """
+    Turn #hashtab and @username in a text to Twitter hyperlinks,
+    similar to the ``urlize()`` function in Django.
+    """
     tweet_parser = ttp.Parser(max_url_length=max_url_length)
     return tweet_parser.parse(text).html
 

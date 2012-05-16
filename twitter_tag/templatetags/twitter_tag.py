@@ -5,10 +5,11 @@ from urllib2 import URLError
 
 from django import template
 from django.core.cache import cache
+from django.utils.safestring import mark_safe
 from templatetag_sugar.parser import Optional, Constant, Name, Variable
 from templatetag_sugar.register import tag
 import twitter
-from twitter_tag.utils import enrich_api_result
+from twitter_tag.utils import enrich_api_result, urlize_twitter_text
 
 
 register = template.Library()
@@ -73,3 +74,11 @@ def search_tweets(context, search_query, asvar, lang='', exclude='', max_url_len
     context[asvar] = tweets
     cache.set(cache_key, tweets)
     return ""
+
+
+@register.filter
+def urlize_twitter(text):
+    """
+    Replace #hashtag and @username references in a tweet with HTML text.
+    """
+    return mark_safe(urlize_twitter_text(text))
